@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'assets\css\input.css' %}">
+{% endblock css %}
+
+{% block home_nav_active %} active {% endblock %}
+
+{% block content %}
+<!-- Values Section -->
+<section id="values" class="values section">
+
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+      <h2>Our Values</h2>
+      <p>What we value most<br></p>
+    </div><!-- End Section Title -->
+
+    
+
+    <div class="container">
+
+      <div class="row gy-4 align-items-center">
+
+        <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="card">
+              <input class="btn-get-started" type="file" id="file-input" multiple accept="image/*,audio/*,video/*">
+              <label for="file-input">  
+                <img src="{% static 'assets/img/upload.png' %}" class="img-fluid" alt="">
+                <p>Drag &amp; drop files here</p>
+                <p>click to select files</p>
+              </label>
+            </div>
+        </div><!-- End Card Item -->
+
+      </div>
+    </div>
+
+  </section><!-- /Values Section -->
+
+  {% block script %}
+  <script src="{% static 'assets\css\input.css' %}"></script>
+
+  {% endblock script%}
+
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h1>Analysis Result</h1>
+<p>Filename: {{ uploaded_file.filename }}</p>
+<p>Upload Date: {{ uploaded_file.upload_date }}</p>
+{% if uploaded_file.is_deepfake is None %}
+    <p>Analysis Pending...</p>  {#  Show this while analysis is in progress #}
+{% elif uploaded_file.is_deepfake %}
+    <p>Result: <span style="color: red;">DEEPFAKE</span></p>
+{% else %}
+    <p>Result: <span style="color: green;">NOT A DEEPFAKE</span></p>
+{% endif %}
+<p>Analysis Details: {{ uploaded_file.analysis_details }}</p>
+{% endblock content %}
