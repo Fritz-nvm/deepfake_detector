@@ -1,14 +1,13 @@
 from django import forms
-from .models import UploadedFile
+from .models import DeepfakeAnalysis
 
-class FileUploadForm(forms.ModelForm):
+class ImageUploadForm(forms.ModelForm):
+    """Form for image upload and deepfake detection."""
     class Meta:
-        model = UploadedFile
-        fields = ['file']  #  The form will handle the 'file' field
-        widget=forms.FileInput(attrs={'class': 'form-control-file'})
-    
-
-     def clean_image(self):
+        model = DeepfakeAnalysis
+        fields = ['image']
+        
+    def clean_image(self):
         """Validate the uploaded image."""
         image = self.cleaned_data.get('image')
         

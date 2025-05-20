@@ -7,12 +7,15 @@ import logging
 
 from .forms import ImageUploadForm
 from .models import DeepfakeAnalysis
-from .services import DeepfakeDetectionService
+from myapp.services.img_ml_service import DeepfakeDetectionService
 
 logger = logging.getLogger(__name__)
 
 # Initialize the detection service
 detection_service = DeepfakeDetectionService()
+
+def home(request):
+    return render(request, 'home.html')
 
 def index(request):
     """Render the main page with upload form."""
