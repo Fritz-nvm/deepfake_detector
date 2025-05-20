@@ -1,55 +1,125 @@
-from django.shortcuts import render
-from django.http import HttpResponse
-
-
-# Create your views here.
-def home(request):
-    return render(request, 'home.html')
-
-def detection(request):
-    return render(request, 'detection.html')
 from django.shortcuts import render, redirect
-from django.core.files.storage import default_storage
-from django.http import HttpResponse
-from .models import UploadedFile
-from .forms import FileUploadForm  # You'll need to create this form
+from django.views import View
+from django.http import JsonResponse
+from django.conf import settings
+import os
+import logging
 
-def upload_and_analyze(request):
-    if request.method == 'POST':
-        form = FileUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            uploaded_file = form.save()  # Save the file to storage and create an UploadedFile instance
+from .forms import ImageUploadForm
+from .models import DeepfakeAnalysis
+from .services import DeepfakeDetectionService
 
-            #  Here you would call your deepfake detection function/model
-            #  This is a placeholder
-            is_deepfake, analysis_details = analyze_file(uploaded_file.file.path)
+logger = logging.getLogger(__name__)
 
-            # Update the UploadedFile instance with the results
-            uploaded_file.is_deepfake = is_deepfake
-            uploaded_file.analysis_details = analysis_details
-            uploaded_file.save()
+# Initialize the detection service
+detection_service = DeepfakeDetectionService()
 
-            return redirect('analysis_result', file_id=uploaded_file.id)  # Redirect to result page
-        else:
-            return render(request, 'upload_form.html', {'form': form})  #show form errors
-    else:
-        form = FileUploadForm()  # Create an empty form for the initial request
-    return render(request, 'upload_form.html', {'form': form})
+def index(request):
+    """Render the main page with upload form."""
+    return render(request, 'deepfake_detector/index.html')
 
-def analysis_result(request, file_id):
-    uploaded_file = UploadedFile.objects.get(pk=file_id)
-    return render(request, 'analysis_result.html', {'uploaded_file': uploaded_file})
+class DeepfakeDetectionView(View):
+    """Class-based view for deepfake detection with web interface."""
+    
+    def get(self, request):
+        """Render the detection form."""
+        form = ImageUploadForm()
+        return render(request, 'deepfake_detector/detect.html', {'form': form})
+    
+    def post(self, request):
+        """Process image upload and perform detection."""
+        form = ImageUploadForm(request.POST, request.FILES)
+        
+        if not form.is_valid():
+            return render(request, 'deepfake_detector/detect.html', {
+                'form': form,
+                'error': 'Invalid form submission'
+            })
+        
+        try:
+            # Save form to get the image path
+            analysis = form.save(commit=False)
+            
+            # Get the full path to the saved image
+            image_path = os.path.join(settings.MEDIA_ROOT, str(analysis.image))
+            
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
+            
+            # Save the model instance to save the file
+            analysis.save()
+            
+            # Perform deepfake detection
+            result = detection_service.detect_deepfake(image_path)
+            
+            # Update the analysis object with results
+            analysis.is_fake = result['is_fake']
+            analysis.confidence = result['confidence']
+            analysis.prediction = result['prediction']
+            analysis.confidence_real = result['confidence_scores'].get('Real', 0.0)
+            analysis.confidence_fake = result['confidence_scores'].get('Fake', 0.0)
+            analysis.save()
+            
+            return render(request, 'deepfake_detector/result.html', {
+                'result': result,
+                'analysis': analysis,
+                'image_url': analysis.image.url
+            })
+            
+        except Exception as e:
+            logger.error(f"Error during deepfake detection: {str(e)}")
+            return render(request, 'deepfake_detector/detect.html', {
+                'form': form,
+                'error': f"Error processing image: {str(e)}"
+            })
 
-def analyze_file(file_path):
-    """
-    Placeholder function for your deepfake analysis logic.  Replace this with your actual deepfake detection code.
-    :param file_path:  The path to the uploaded file on the server's filesystem.
-    :return:  A tuple: (is_deepfake: bool, analysis_details: str)
-    """
-    #  Load your deepfake detection model here
-    #  Perform analysis on the file_path
-    #  Example (replace with your actual analysis):
-    import random
-    is_deepfake = random.choice([True, False])
-    analysis_details = "Analysis performed. Confidence: {}%".format(random.randint(70, 99) if is_deepfake else random.randint(1, 30))
-    return is_deepfake, analysis_details
+def recent_analyses(request):
+    """Display recent analyses."""
+    analyses = DeepfakeAnalysis.objects.order_by('-created_at')[:10]
+    return render(request, 'deepfake_detector/recent.html', {'analyses': analyses})
+
+# API endpoint for programmatic access
+def detect_api(request):
+    """API endpoint for deepfake detection."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST requests are supported'}, status=405)
+    
+    if 'image' not in request.FILES:
+        return JsonResponse({'error': 'No image file provided'}, status=400)
+    
+    try:
+        form = ImageUploadForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return JsonResponse({'error': form.errors['image'][0]}, status=400)
+        
+        # Save form to get the image path
+        analysis = form.save(commit=False)
+        
+        # Get the full path to the saved image
+        image_path = os.path.join(settings.MEDIA_ROOT, str(analysis.image))
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        
+        # Save the model instance to save the file
+        analysis.save()
+        
+        # Perform deepfake detection
+        result = detection_service.detect_deepfake(image_path)
+        
+        # Update the analysis object with results
+        analysis.is_fake = result['is_fake']
+        analysis.confidence = result['confidence']
+        analysis.prediction = result['prediction']
+        analysis.confidence_real = result['confidence_scores'].get('Real', 0.0)
+        analysis.confidence_fake = result['confidence_scores'].get('Fake', 0.0)
+        analysis.save()
+        
+        # Add image URL to result
+        result['image_url'] = request.build_absolute_uri(analysis.image.url)
+        
+        return JsonResponse(result)
+    
+    except Exception as e:
+        logger.error(f"Error during API deepfake detection: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)

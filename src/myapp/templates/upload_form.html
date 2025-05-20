@@ -20,21 +20,25 @@
     
 
     <div class="container">
+      <form action="myapp:upload_and_analyze" method="post">
+        {% csrf_token %}
 
-      <div class="row gy-4 align-items-center">
+        <div class="row gy-4 align-items-center">
 
-        <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+          <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
             <div class="card">
-              <input class="btn-get-started" type="file" id="file-input" multiple accept="image/*,audio/*,video/*">
-              <label for="file-input">  
-                <img src="{% static 'assets/img/upload.png' %}" class="img-fluid" alt="">
-                <p>Drag &amp; drop files here</p>
-                <p>click to select files</p>
-              </label>
+               <input class="btn-get-started" type="file" id="file-input" multiple accept="image/*,audio/*,video/*">
+               <label for="file-input">  
+                 <img src="{% static 'assets/img/upload.png' %}" class="img-fluid" alt="">
+                 <p>Drag &amp; drop files here</p>
+                 <p>click to select files</p>
+               </label>
             </div>
-        </div><!-- End Card Item -->
+          </div><!-- End Card Item -->
 
-      </div>
+        </div>
+        <button class="btn-getstarted flex-md-shrink-0" type="submit">Analyze</button>
+     </form>
     </div>
 
   </section><!-- /Values Section -->
