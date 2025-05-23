@@ -14,7 +14,7 @@ class DeepfakeDetectionService:
             cls._instance = super(DeepfakeDetectionService, cls).__new__(cls)
             cls._instance.initialize()
         return cls._instance
-    
+      
     def initialize(self):
         """Initialize the deepfake detection model and processor."""
         try:

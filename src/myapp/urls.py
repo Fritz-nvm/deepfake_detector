@@ -1,14 +1,17 @@
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+
+
 from . import views
 
 app_name = 'myapp'
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('upload_form/', views.upload_and_analyze, name='upload-form'),
-    path('result/<int:file_id>/', views.analysis_result, name='analysis_result'),
+    path('detect/', views.DeepfakeDetectionView.as_view(), name='detect'),
 
-
+ 
 ]
 
 if settings.DEBUG:

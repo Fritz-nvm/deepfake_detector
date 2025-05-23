@@ -19,7 +19,7 @@ def home(request):
 
 def index(request):
     """Render the main page with upload form."""
-    return render(request, 'deepfake_detector/index.html')
+    return render(request, 'detect.html')
 
 class DeepfakeDetectionView(View):
     """Class-based view for deepfake detection with web interface."""
@@ -27,14 +27,14 @@ class DeepfakeDetectionView(View):
     def get(self, request):
         """Render the detection form."""
         form = ImageUploadForm()
-        return render(request, 'deepfake_detector/detect.html', {'form': form})
+        return render(request, 'detect.html', {'form': form})
     
     def post(self, request):
         """Process image upload and perform detection."""
         form = ImageUploadForm(request.POST, request.FILES)
         
         if not form.is_valid():
-            return render(request, 'deepfake_detector/detect.html', {
+            return render(request, 'detect.html', {
                 'form': form,
                 'error': 'Invalid form submission'
             })
@@ -63,7 +63,7 @@ class DeepfakeDetectionView(View):
             analysis.confidence_fake = result['confidence_scores'].get('Fake', 0.0)
             analysis.save()
             
-            return render(request, 'deepfake_detector/result.html', {
+            return render(request, 'result.html', {
                 'result': result,
                 'analysis': analysis,
                 'image_url': analysis.image.url
@@ -71,7 +71,7 @@ class DeepfakeDetectionView(View):
             
         except Exception as e:
             logger.error(f"Error during deepfake detection: {str(e)}")
-            return render(request, 'deepfake_detector/detect.html', {
+            return render(request, 'detect.html', {
                 'form': form,
                 'error': f"Error processing image: {str(e)}"
             })
@@ -79,7 +79,7 @@ class DeepfakeDetectionView(View):
 def recent_analyses(request):
     """Display recent analyses."""
     analyses = DeepfakeAnalysis.objects.order_by('-created_at')[:10]
-    return render(request, 'deepfake_detector/recent.html', {'analyses': analyses})
+    return render(request, 'recent.html', {'analyses': analyses})
 
 # API endpoint for programmatic access
 def detect_api(request):

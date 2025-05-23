@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Clarity AI - detect {% endblock %} 
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'assets\css\input.css' %}">
+{% endblock css %}
+
+{% block home_nav_active %} active {% endblock %}
+
+{% block content %}
+<!-- Values Section -->
+<section id="values" class="values section">
+
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+      <h2>Our Values</h2>
+      <p>What we value most<br></p>
+    </div><!-- End Section Title -->
+
+    {% if error %}
+       <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <div class="container">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+            {{ form.image }}
+            <div class="form-text">{{ form.image.help_text }}</div>
+            {% if form.image.errors %}
+            <div class="alert alert-danger mt-2">
+                {{ form.image.errors }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="mb-3">
+            <div id="imagePreviewContainer" class="d-none">
+                <h5>Preview:</h5>
+                <img id="imagePreview" class="img-fluid rounded" alt="Image Preview">
+            </div>
+        </div>
+        
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Detect Deepfake</button>
+        </div>
+    </form>
+    </div>
+
+  </section><!-- /Values Section -->
+
+  {% block script %}
+  <script src="{% static 'assets\css\input.css' %}"></script>
+
+  {% endblock script%}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        
+        imageInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    previewContainer.classList.remove('d-none');
+                };
+                
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    });
+</script>
+{% endblock %}
+`
